@@ -6,14 +6,16 @@ interface UseInfiniteScrollOptions {
 }
 
 export function useInfiniteScroll(
-  ref: RefObject<HTMLDivElement>,
+  ref: RefObject<HTMLDivElement | null>,
   { enabled = true, onLoadMore }: UseInfiniteScrollOptions,
 ) {
   useEffect(() => {
     if (!enabled) return;
+
     const node = ref.current;
     if (!node) return;
-    const observer = new window.IntersectionObserver(
+
+    const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
           onLoadMore();
@@ -21,7 +23,9 @@ export function useInfiniteScroll(
       },
       { threshold: 1 },
     );
+
     observer.observe(node);
+
     return () => {
       observer.disconnect();
     };
