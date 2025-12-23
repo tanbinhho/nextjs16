@@ -1,14 +1,12 @@
-export async function getProduct(id: string, revalidate?: number) {
-  const fetchOptions = revalidate ? { next: { revalidate } } : undefined;
-  const res = await fetch(`https://fakestoreapi.com/products/${id}`, fetchOptions);
+export async function getProduct(id: string) {
+  const res = await fetch(`https://fakestoreapi.com/products/${id}`);
   if (!res.ok) throw new Error('Failed to fetch product');
   return res.json();
 }
 const PAGE_SIZE = 9;
 
-export async function fetchProducts({ pageParam = 0, revalidate = undefined } = {}) {
-  const fetchOptions = revalidate ? { next: { revalidate } } : undefined;
-  const res = await fetch('https://fakestoreapi.com/products', fetchOptions);
+export async function fetchProducts({ pageParam = 0 } = {}) {
+  const res = await fetch('https://fakestoreapi.com/products');
   if (!res.ok) throw new Error('Failed to fetch products');
   const allProducts = await res.json();
   const start = pageParam * PAGE_SIZE;

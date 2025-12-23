@@ -24,8 +24,13 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Lấy URL gốc từ biến môi trường hoặc fallback
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://yourdomain.com';
   return (
     <html lang="en">
+      <head>
+        <link rel="canonical" href={siteUrl} />
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ReactQueryProvider>{children}</ReactQueryProvider>
       </body>

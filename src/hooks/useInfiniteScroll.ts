@@ -6,7 +6,7 @@ interface UseInfiniteScrollOptions {
 }
 
 export function useInfiniteScroll(
-  ref: RefObject<Element>,
+  ref: RefObject<HTMLDivElement>,
   { enabled = true, onLoadMore }: UseInfiniteScrollOptions,
 ) {
   useEffect(() => {

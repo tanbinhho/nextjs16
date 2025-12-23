@@ -104,7 +104,7 @@ export default async function ProductDetail({ params }: { params: Promise<{ id: 
           className="h-48 w-auto object-contain drop-shadow-md"
         />
       </div>
-  
+
       <div className="mb-2 font-semibold text-xl text-blue-600">${product.price}</div>
 
       <h2 className="text-lg font-semibold mt-6 mb-2">Product description</h2>
