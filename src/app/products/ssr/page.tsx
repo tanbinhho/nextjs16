@@ -4,6 +4,8 @@ import { fetchProducts } from '@/services/productApi';
 import { dehydrate, HydrationBoundary, QueryClient } from '@tanstack/react-query';
 import { Metadata } from 'next';
 
+export const dynamic = 'force-dynamic';
+
 export async function generateMetadata(): Promise<Metadata> {
   return {
     title: 'All Products | My Shop',
