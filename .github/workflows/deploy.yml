@@ -2,47 +2,64 @@ name: Deploy Next.js App (Production)
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+
+env:
+  APP_NAME: nextjs16
+  APP_DIR: /var/www/nextjs16
+  NODE_VERSION: 20
+  PORT: 3001
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout source
-      - name: Checkout code
+      # ======================
+      # 1. Checkout
+      # ======================
+      - name: Checkout source code
         uses: actions/checkout@v4
 
-      # 2. Setup Node.js
+      # ======================
+      # 2. Setup Node
+      # ======================
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
-      # 3. Install deps & build
+      # ======================
+      # 3. Install & Build
+      # ======================
       - name: Install dependencies
         run: npm ci
 
       - name: Build Next.js
         run: npm run build
 
-      # 4. Prepare deploy package
-      - name: Prepare deploy package
+      # ======================
+      # 4. Create release
+      # ======================
+      - name: Package build artifact
         run: |
-          mkdir deploy
+          mkdir -p release
           cp -r \
             .next \
             public \
             package.json \
             package-lock.json \
             next.config.ts \
-            deploy/
-          tar -czf deploy.tar.gz deploy
+            ecosystem.config.js \
+            release/
 
+          tar -czf release.tar.gz release
+
+      # ======================
       # 5. Upload to server
-      - name: Upload to server
+      # ======================
+      - name: Upload release to server
         env:
           SERVER_KEY: ${{ secrets.SERVER_KEY }}
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
@@ -51,12 +68,14 @@ jobs:
           echo "$SERVER_KEY" > key.pem
           chmod 600 key.pem
 
-          rsync -avz \
+          rsync -az \
             -e "ssh -o StrictHostKeyChecking=no -i key.pem" \
-            deploy.tar.gz \
-            $SERVER_USER@$SERVER_HOST:/var/www/nextjs16
+            release.tar.gz \
+            $SERVER_USER@$SERVER_HOST:${{ env.APP_DIR }}/releases/$(date +%Y%m%d%H%M%S).tar.gz
 
-      # 6. SSH deploy & run PM2 (SET PORT)
+      # ======================
+      # 6. Deploy & Restart
+      # ======================
       - name: Deploy on server
         env:
           SERVER_KEY: ${{ secrets.SERVER_KEY }}
@@ -68,18 +87,15 @@ jobs:
 
             cd /var/www/nextjs16
 
-            rm -rf deploy
-            tar -xzf deploy.tar.gz
-            rm deploy.tar.gz
+            LATEST=$(ls -t releases | head -n 1)
+            mkdir -p current
 
-            cd deploy
+            rm -rf current/*
+            tar -xzf releases/$LATEST -C current --strip-components=1
 
+            cd current
             npm ci --omit=dev
 
-            pm2 reload nextjs16 || \
-            pm2 start npm \
-              --name nextjs16 \
-              -- start -- -p 3001
-
+            pm2 reload ecosystem.config.js || pm2 start ecosystem.config.js
             pm2 save
           EOF
