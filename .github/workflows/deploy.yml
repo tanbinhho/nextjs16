@@ -68,10 +68,16 @@ jobs:
           echo "$SERVER_KEY" > key.pem
           chmod 600 key.pem
 
+          ssh -o StrictHostKeyChecking=no -i key.pem \
+            $SERVER_USER@$SERVER_HOST \
+            "mkdir -p /var/www/nextjs16/releases"
+
+      - name: Upload release to server
+        run: |
           rsync -az \
             -e "ssh -o StrictHostKeyChecking=no -i key.pem" \
             release.tar.gz \
-            $SERVER_USER@$SERVER_HOST:${{ env.APP_DIR }}/releases/$(date +%Y%m%d%H%M%S).tar.gz
+            $SERVER_USER@$SERVER_HOST:/var/www/nextjs16/releases/$(date +%Y%m%d%H%M%S).tar.gz
 
       # ======================
       # 6. Deploy & Restart
