@@ -14,20 +14,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. Setup Node
+      # 2. Setup Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
 
-      # 3. Install & build
+      # 3. Install deps & build
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Build Next.js
         run: npm run build
 
-      # 4. Gom source + build + config
+      # 4. Prepare deploy package
       - name: Prepare deploy package
         run: |
           mkdir deploy
@@ -36,12 +37,11 @@ jobs:
             public \
             package.json \
             package-lock.json \
-            next.config.ts \
-            # .env.production \
+            next.config.js \
             deploy/
           tar -czf deploy.tar.gz deploy
 
-      # 5. Copy tar.gz lên server
+      # 5. Upload to server
       - name: Upload to server
         env:
           SERVER_KEY: ${{ secrets.SERVER_KEY }}
@@ -54,9 +54,9 @@ jobs:
           rsync -avz \
             -e "ssh -o StrictHostKeyChecking=no -i key.pem" \
             deploy.tar.gz \
-            $SERVER_USER@$SERVER_HOST:/var/www/e-commerce
+            $SERVER_USER@$SERVER_HOST:/var/www/nextjs16
 
-      # 6. SSH vào server & deploy
+      # 6. SSH deploy & run PM2 (SET PORT)
       - name: Deploy on server
         env:
           SERVER_KEY: ${{ secrets.SERVER_KEY }}
@@ -64,14 +64,22 @@ jobs:
           SERVER_USER: ${{ secrets.SERVER_USER }}
         run: |
           ssh -o StrictHostKeyChecking=no -i key.pem $SERVER_USER@$SERVER_HOST << 'EOF'
-            cd /var/www/next16
+            set -e
 
+            cd /var/www/nextjs16
+
+            rm -rf deploy
             tar -xzf deploy.tar.gz
             rm deploy.tar.gz
 
             cd deploy
-            npm install --omit=dev --force
 
-            pm2 reload ecommerce || pm2 start npm --name ecommerce -- start
+            npm ci --omit=dev
+
+            pm2 reload ecommerce || \
+            pm2 start npm \
+              --name ecommerce \
+              -- start -- -p 3001
+
             pm2 save
           EOF
