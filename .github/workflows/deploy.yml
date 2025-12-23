@@ -36,8 +36,8 @@ jobs:
             public \
             package.json \
             package-lock.json \
-            next.config.js \
-            .env.production \
+            next.config.ts \
+            # .env.production \
             deploy/
           tar -czf deploy.tar.gz deploy
 
