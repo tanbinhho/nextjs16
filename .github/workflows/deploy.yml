@@ -76,9 +76,9 @@ jobs:
 
             npm ci --omit=dev
 
-            pm2 reload ecommerce || \
+            pm2 reload nextjs16 || \
             pm2 start npm \
-              --name ecommerce \
+              --name nextjs16 \
               -- start -- -p 3001
 
             pm2 save
