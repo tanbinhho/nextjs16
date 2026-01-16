@@ -12,6 +12,7 @@ export default function ProductListInfinite() {
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   useInfiniteScroll(loadMoreRef, {
+    
     enabled: !!hasNextPage && !isLoading,
     onLoadMore: fetchNextPage,
   });
